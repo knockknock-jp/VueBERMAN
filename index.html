@@ -1,0 +1,1365 @@
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <title>VueBERMAN</title>
+        <meta name="viewport" content="width=864">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+        <style type="text/css">
+            html {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                box-sizing: border-box;
+                font-family: 'VT323', monospace;
+                font-size: 25px;
+                letter-spacing: 0.1em;
+                color: #fff;
+                background-color: #bbb;
+            }
+            .container {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 32px;
+                box-sizing: border-box;
+            }
+            .copyright {
+                position: absolute;
+                bottom: 0;
+                right: 32px;
+                font-size: 20px;
+                text-shadow: 2px 2px 0 #000;
+                line-height: 32px;
+            }
+
+            /* モーダル */
+            .modal {
+                z-index: 1;
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                background-color: rgba(0, 0, 0, 0.7);
+            }
+            .modal__container {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 480px;
+                height: 352px;
+                box-sizing: border-box;
+                background-color: #000;
+            }
+            .modal__inner {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+                text-align: center;
+            }
+            .modal__heading {
+                display: block;
+                width: 100%;
+                text-align: center;
+                font-size: 60px;
+            }
+            .modal__heading > span {
+                display: inline-block;
+                width: 32px;
+                height: 32px;
+                margin: 0 5px;
+                background-size: 32px 32px;
+                background-image: url('./bomb2.png');
+            }
+            .modal__link {
+                display: inline-block;
+                margin-top: 20px;
+                line-height: 30px;
+                padding: 0 15px;
+                border: solid 2px #fff;
+                font-size: 30px;
+                color: #000;
+                text-decoration: none;
+                background-color: #fff;
+            }
+            .modal__link:hover {
+                color: #fff;
+                background-color: #000;
+            }
+            .modal__block {
+                margin-top: 40px;
+                padding: 0 32px;
+                text-align: left;
+            }
+            .modal__list {
+                width: 100%;
+                margin-top: 5px;
+                font-size: 18px;
+            }
+            .modal__list > dt {
+                display: inline-block;
+            }
+            .modal__list > dd {
+                display: inline-block;
+            }
+            .modal__image {
+                margin: 20px auto 0 auto;
+                display: block;
+            }
+
+            /* ゲームパーツ */
+            .time-count {
+                position: absolute;
+                top: 0;
+                left: 32px;
+                font-size: 25px;
+                text-shadow: 2px 2px 0 #000;
+            }
+            .time-count > dt {
+                display: inline-block;
+                width: 2em;
+            }
+            .time-count > dd {
+                display: inline-block;
+                width: 2em;
+                text-align: right;
+            }
+            .left-count {
+                position: absolute;
+                top: 0;
+                right: 32px;
+                font-size: 25px;
+                text-shadow: 2px 2px 0 #000;
+            }
+            .left-count > dt {
+                display: inline-block;
+                width: 2em;
+            }
+            .left-count > dd {
+                display: inline-block;
+                width: 2em;
+                text-align: right;
+            }
+            .player {
+                position: absolute;
+                top: 0;
+                left: 0;
+                overflow: hidden;
+                width: 32px;
+                height: 32px;
+                background-size: 544px 32px;
+                background-image: url('./player.png');
+                transition-delay: 0ms;
+                transition-duration: 100ms;
+                transition-property: transform;
+                transition-timing-function: linear;
+            }
+            .enemy {
+                position: absolute;
+                top: 0;
+                left: 0;
+                overflow: hidden;
+                width: 32px;
+                height: 32px;
+                background-size: 96px 32px;
+                background-image: url('./enemy.png');
+                transition-delay: 0ms;
+                transition-duration: 450ms;
+                transition-property: transform;
+                transition-timing-function: linear;
+            }
+            .field {
+                position: relative;
+            }
+            .cell {
+                position: absolute;
+                width: 32px;
+                height: 32px;
+                background-color: #62972c;
+                background-size: 32px 32px;
+            }
+            .cell.fixed {
+                background-image: url('./fixed.png');
+            }
+            .cell.free {
+            }
+            .cell.block {
+                background-image: url('./block.png');
+            }
+            .cell.block-broken {
+                background-image: url('./block-bloken.png');
+            }
+            .cell.bomb {
+                background-position: 0 0;
+                background-size: 128px 32px;
+                background-image: url('./bomb.png');
+            }
+            .cell.explosion {
+                background-position: 0 0;
+                background-size: 480px 32px;
+                background-image: url('./explosion.png');
+            }
+            .cell.item-fire-power {
+                background-image: url('./item-fire-power.png');
+            }
+            .cell.item-move-speed {
+                background-image: url('./item-move-speed.png');
+            }
+            .cell.item-bomb-possessions {
+                background-image: url('./item-bomb-possessions.png');
+            }
+            .exit {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 32px;
+                height: 32px;
+                background-size: 32px 32px;
+                background-image: url('./exit.png');
+            }
+            /*.cell.current {*/
+                /*background: none;*/
+                /*background-color: #98e23e;*/
+            /*}*/
+
+        </style>
+    </head>
+    <body>
+        <div id="app" class="container">
+            <dl class="time-count">
+                <dt>TIME</dt>
+                <dd>{{ time }}</dd>
+            </dl>
+            <dl class="left-count">
+                <dt>LEFT</dt>
+                <dd>{{ left }}</dd>
+            </dl>
+            <div class="field" v-bind:style="{ width: gameMap[0].length * config.CELL_SIZE, height: gameMap.length * config.CELL_SIZE }">
+
+                <!-- GAME OPENING -->
+                <template v-if="scene === config.SCENE_GAME_OPENING">
+                    <div class="modal">
+                        <div class="modal__container">
+                            <div class="modal__inner">
+                                <h1 class="modal__heading">Vue<span></span>BERMAN</h1>
+                                <a class="modal__link" href="#" v-on:click.prevent="scene = config.SCENE_GAME_PLAY">GAME START</a>
+                                <div class="modal__block">
+                                    <dl class="modal__list">
+                                        <dt>MOVE UP : </dt>
+                                        <dd>ArrowUp or W</dd>
+                                    </dl>
+                                    <dl class="modal__list">
+                                        <dt>MOVE DOWN : </dt>
+                                        <dd>ArrowDown or S</dd>
+                                    </dl>
+                                    <dl class="modal__list">
+                                        <dt>MOVE LEFT : </dt>
+                                        <dd>ArrowLeft or A</dd>
+                                    </dl>
+                                    <dl class="modal__list">
+                                        <dt>MOVE RIGHT : </dt>
+                                        <dd>ArrowRight or D</dd>
+                                    </dl>
+                                    <dl class="modal__list">
+                                        <dt>SET BOMB : </dt>
+                                        <dd>Shift or Enter</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <!-- /GAME OPENING -->
+
+                <template v-for="(row, i) in gameMap">
+                    <template v-for="(col, j) in row">
+                        <template v-if="col == config.CELL_TYPE_FIXED">
+                            <div class="cell fixed" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_FREE">
+                            <div class="cell free"  v-bind:class="player.currentPositionX === j && player.currentPositionY === i ? 'current' : ''" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_BLOCK">
+                            <div class="cell block" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_BLOCK_BROKEN">
+                            <div class="cell block-broken" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_BOMB">
+                            <div class="cell bomb" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE, backgroundPosition: bombBackgroundPosition }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_EXPLOSION">
+                            <div class="cell explosion" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE , backgroundPosition: getExplosionBackgroundPosition(i, j)}"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_ITEM_EXPLOSION_POWER">
+                            <div class="cell item-fire-power" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_ITEM_MOVE_SPEED">
+                            <div class="cell item-move-speed" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_ITEM_BOMB_POSSESSIONS">
+                            <div class="cell item-bomb-possessions" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                        <template v-else-if="col == config.CELL_TYPE_EXIT">
+                            <div class="cell exit" v-bind:style="{ left: j * config.CELL_SIZE, top: i * config.CELL_SIZE }"></div>
+                        </template>
+                    </template>
+                </template>
+                <template v-if="gameIsCompleted">
+                    <div class="exit" v-bind:style="{ left: exitPositionX * config.CELL_SIZE, top: exitPositionY * config.CELL_SIZE }"></div>
+                </template>
+                <div class="player" v-bind:style="{ transform: 'translate(' + (player.displayPositionX * config.CELL_SIZE) + 'px, ' + (player.displayPositionY * config.CELL_SIZE) + 'px)', backgroundPosition: playerBackgroundPosition }"></div>
+                <template v-for="(enemy, i) in enemies">
+                    <template v-if="!enemy.remove">
+                        <div class="enemy" v-bind:style="{ transform: 'translate(' + (enemies[i].x * config.CELL_SIZE) + 'px, ' + (enemies[i].y * config.CELL_SIZE) + 'px)', backgroundPosition: getEnemyBackgroundPosition(i) }"></div>
+                    </template>
+                </template>
+
+                <!-- GAME CLEAR -->
+                <template v-if="scene === config.SCENE_GAME_CLEAR">
+                    <div class="modal">
+                        <div class="modal__container">
+                            <div class="modal__inner">
+                                <h1 class="modal__heading">CONGRATULATIONS</h1>
+                                <template v-if="clearCount < 250">
+                                    <img class="modal__image" src="./cup.png" alt="">
+                                    <p>RANK:A</p>
+                                </template>
+                                <template v-else-if="clearCount < 350">
+                                    <img class="modal__image" src="./cup2.png" alt="">
+                                    <p>RANK:B</p>
+                                </template>
+                                <template v-else>
+                                    <img class="modal__image" src="./cup3.png" alt="">
+                                    <p>RANK:C</p>
+                                </template>
+                                <a class="modal__link" href="#" v-on:click.prevent="retryGame()">TRY AGAIN</a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <!-- /GAME CLEAR -->
+
+                <!-- GAME OVER -->
+                <template v-if="scene === config.SCENE_GAME_OVER">
+                    <div class="modal">
+                        <div class="modal__container">
+                            <div class="modal__inner">
+                                <h1 class="modal__heading">GAME OVER</h1>
+                                <img class="modal__image" src="./player2.png" alt="">
+                                <a class="modal__link" href="#" v-on:click.prevent="retryGame()">TRY AGAIN</a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <!-- /GAME OVER -->
+
+            </div>
+            <p class="copyright">&copy; 2020 www.knockknock.jp</p>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script type="text/javascript">
+
+            // FPS表示
+            const stats = (()=> {
+                const stats = new Stats();
+                stats.showPanel(0);
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.left = '0px';
+                stats.domElement.style.top = '0px';
+                document.body.appendChild(stats.domElement);
+                return stats;
+            })();
+
+            // メイン
+            new Vue({
+                el: '#app',
+                data: {
+                    // 各種設定
+                    config: {
+                        // シーン
+                        SCENE_GAME_OPENING: 0,
+                        SCENE_GAME_PLAY: 1,
+                        SCENE_GAME_CLEAR: 2,
+                        SCENE_GAME_OVER: 3,
+                        // セル情報
+                        CELL_SIZE: 32,
+                        CELL_TYPE_FIXED: 0, // 壊せない壁
+                        CELL_TYPE_FREE: 1, // 通路
+                        CELL_TYPE_BLOCK: 2, // ブロック（壊せる壁）
+                        CELL_TYPE_BLOCK_BROKEN: 3, // ブロック（壊れた状態）
+                        CELL_TYPE_BOMB: 4, // 爆弾設置
+                        CELL_TYPE_EXPLOSION: 5, // 爆弾爆発
+                        CELL_TYPE_ITEM_EXPLOSION_POWER: 6, // アイテム（火力）
+                        CELL_TYPE_ITEM_MOVE_SPEED: 7, // アイテム（移動速度）
+                        CELL_TYPE_ITEM_BOMB_POSSESSIONS: 8, // アイテム（爆弾所有数）
+                        // 向き
+                        DIRECTION_UP: 'up',
+                        DIRECTION_RIGHT: 'right',
+                        DIRECTION_DOWN: 'down',
+                        DIRECTION_LEFT: 'left',
+                        // プレーヤー情報
+                        PLAYER_INITIAL_LEFT: 2, // 初期残数
+                        PLAYER_INITIAL_MOVE_SPEED: 0.2,
+                        PLAYER_INITIAL_EXPLOSION_POWER: 1,
+                        PLAYER_INITIAL_BOMB_POSSESSIONS: 1,
+                        // 爆弾カウント
+                        BOMB_COUNT_STANDBY: 0, // 爆弾スタンバイ
+                        BOMB_COUNT_PROPAGATION: 1, // 爆発伝播（一回だけ実行）
+                        BOMB_COUNT_EXPLOSION: 2, // 爆爆
+                        BOMB_COUNT_COMPLETE: 3, // 爆爆完了
+                        // 爆弾情報
+                        BOMB_STANDBY_TIME: 3000, // 爆弾待機時間
+                        BOMB_EXPLOSION_TIME: 1000, // 爆発持続時間
+                        BOMB_DELAY_TIME: 100, // 誘爆時の遅延
+                        // アイテム情報
+                        ITEM_TYPES: [6, 7, 8],
+                        ITEM_APPEARANCE_PROBABILITY: 0.2,
+                        ITEM_EXPLOSION_POWER_STEP_UP_POINT: 1, // アイテム（火力）の上昇数
+                        ITEM_MOVE_SPEED_STEP_UP_POINT: 0.1, // アイテム（移動速度）の上昇数
+                        ITEM_BOMB_POSSESSIONS_STEP_UP_POINT: 1, // アイテム（爆弾所有数）の上昇数
+                        // その他
+                        MAX_MOVE_SPEED: 1, // 最大移動スピード
+                        ENEMY_APPEARANCE_PROBABILITY: 0.1, // 敵の出現率
+                        BLOCK_APPEARANCE_PROBABILITY: 0.5, // ブロックの出現率
+                        GAME_MAP_ROW: 13, // 行
+                        GAME_MAP_COL: 25, // 列
+                    },
+                    // シーン
+                    scene: 0,
+                    // 残数
+                    left: 2,
+                    // ゲームマップ
+                    gameMap: null,
+                    // プレーヤー情報
+                    player: {
+                        displayPositionX: 1, // 表示位置
+                        displayPositionY: 1, // 表示位置
+                        currentPositionY: 1, // 現在位置
+                        currentPositionX: 1, // 現在位置
+                        movingDirectionArr: [],
+                        lastMovingDirection: 'down',
+                        moveSpeed: 0.2, // 移動速度
+                        explosionPower: 1, // 爆発威力
+                        bombPossessions: 1, // 爆弾所有数
+                        death: false,
+                    },
+                    // 敵情報
+                    enemies: [
+                        {
+                            y: 1,
+                            x: 1,
+                            direction: 'down',
+                            death: false,
+                            remove: false,
+                        },
+                    ],
+                    // 爆弾カウント
+                    bombsCountMap: null,
+                    // ゲーム完了
+                    gameIsCompleted: false,
+                    exitPositionY: 0,
+                    exitPositionX: 0,
+                    // 描画更新
+                    tickCount: 0,
+                    // クリア時間
+                    clearCount: null,
+                },
+                created () {
+                    // ゲーム初期化
+                    this.initializedGame(this.config.GAME_MAP_ROW, this.config.GAME_MAP_COL);
+                    //
+                    setInterval(()=> {
+                        // FPS計算
+                        stats.update();
+                    }, 1000 / 60);
+                    setInterval(()=> {
+                        if (this.scene !== this.config.SCENE_GAME_PLAY) return;
+                        // プレーヤー移動
+                        this.movePlayer();
+                        // 爆弾起動中
+                        this.runBombs();
+                        // 表示更新
+                        this.tickCount += 1;
+                    }, 1000 / 10);
+                    setInterval(()=> {
+                        if (this.scene !== this.config.SCENE_GAME_PLAY) return;
+                        // 敵移動
+                        this.moveEnemies();
+                    }, 1000 / 2);
+                },
+                beforeMount() {
+                    // KEY UPイベント
+                    document.addEventListener('keydown', (event)=> {
+                        if (this.scene === this.config.SCENE_GAME_PLAY) {
+                            const directionKeyDownHandler = (direction)=> {
+                                if (0 <= this.player.movingDirectionArr.join(',').indexOf(direction)) return;
+                                this.player.movingDirectionArr = this.player.movingDirectionArr.filter((item)=> {
+                                    return item !== direction;
+                                });
+                                this.player.movingDirectionArr.push(direction);
+                                this.player.lastMovingDirection = direction;
+                            };
+                            switch(event.code) {
+                                case 'ArrowUp':
+                                    directionKeyDownHandler(this.config.DIRECTION_UP);
+                                    break;
+                                case 'KeyW':
+                                    directionKeyDownHandler(this.config.DIRECTION_UP);
+                                    break;
+                                case 'ArrowDown':
+                                    directionKeyDownHandler(this.config.DIRECTION_DOWN);
+                                    break;
+                                case 'KeyS':
+                                    directionKeyDownHandler(this.config.DIRECTION_DOWN);
+                                    break;
+                                case 'ArrowRight':
+                                    directionKeyDownHandler(this.config.DIRECTION_RIGHT);
+                                    break;
+                                case 'KeyD':
+                                    directionKeyDownHandler(this.config.DIRECTION_RIGHT);
+                                    break;
+                                case 'ArrowLeft':
+                                    directionKeyDownHandler(this.config.DIRECTION_LEFT);
+                                    break;
+                                case 'KeyA':
+                                    directionKeyDownHandler(this.config.DIRECTION_LEFT);
+                                    break;
+                            }
+                        }
+                    });
+                    // KEY DOWNイベント
+                    document.addEventListener('keyup', (event)=> {
+                        // オープニングシーン
+                        if (this.scene === this.config.SCENE_GAME_OPENING) {
+                            switch(event.code) {
+                                case 'Space':
+                                    this.scene = this.config.SCENE_GAME_PLAY;
+                                    break;
+                                case 'Enter':
+                                    this.scene = this.config.SCENE_GAME_PLAY;
+                                    break;
+                            }
+                        }
+                        // ゲームシーン
+                        else if (this.scene === this.config.SCENE_GAME_PLAY) {
+                            const directionKeyUpHandler = (direction)=> {
+                                this.player.movingDirectionArr = this.player.movingDirectionArr.filter((item)=> {
+                                    return item !== direction;
+                                });
+                            };
+                            switch(event.code) {
+                                case 'ArrowUp':
+                                    directionKeyUpHandler(this.config.DIRECTION_UP);
+                                    break;
+                                case 'KeyW':
+                                    directionKeyUpHandler(this.config.DIRECTION_UP);
+                                    break;
+                                case 'ArrowDown':
+                                    directionKeyUpHandler(this.config.DIRECTION_DOWN);
+                                    break;
+                                case 'KeyS':
+                                    directionKeyUpHandler(this.config.DIRECTION_DOWN);
+                                    break;
+                                case 'ArrowRight':
+                                    directionKeyUpHandler(this.config.DIRECTION_RIGHT);
+                                    break;
+                                case 'KeyD':
+                                    directionKeyUpHandler(this.config.DIRECTION_RIGHT);
+                                    break;
+                                case 'ArrowLeft':
+                                    directionKeyUpHandler(this.config.DIRECTION_LEFT);
+                                    break;
+                                case 'KeyA':
+                                    directionKeyUpHandler(this.config.DIRECTION_LEFT);
+                                    break;
+                                case 'Space':
+                                    // 爆弾設置
+                                    this.setBomb();
+                                    break;
+                                case 'Enter':
+                                    // 爆弾設置
+                                    this.setBomb();
+                                    break;
+                            }
+                        }
+                        // ゲームクリア、ゲームオーバー
+                        else if (this.scene === this.config.SCENE_GAME_OVER || this.scene === this.config.SCENE_GAME_CLEAR) {
+                            switch(event.code) {
+                                case 'Space':
+                                    // ゲームリトライ
+                                    this.retryGame();
+                                    break;
+                                case 'Enter':
+                                    // ゲームリトライ
+                                    this.retryGame();
+                                    break;
+                            }
+                        }
+                    });
+                },
+                methods: {
+                    // ゲーム初期化
+                    initializedGame: function(row, col) {
+                        // マップ生成
+                        this.gameMap = ((row, col)=> {
+                            let arr = [];
+                            let i, max;
+                            for (i = 0, max = row; i < max; i = i + 1) {
+                                let arr2 = [];
+                                let j, max2;
+                                for (j = 0, max2 = col; j < max2; j = j + 1) {
+                                    if (i === 0 || i === row - 1 || j === 0 || j === col - 1 || ((i % 2) === 0 && (j % 2) === 0)) {
+                                        arr2.push(0);
+                                    } else {
+                                        if (i === 1 && (j === 1 || j === 2) || (i === 2 && j === 1)) {
+                                            // スタート地点
+                                            arr2.push(1);
+                                        } else if (i === row - 2 && j === col - 2) {
+                                            // ゴール地点
+                                            arr2.push(1);
+                                        } else {
+                                            if (Math.random() <= this.config.BLOCK_APPEARANCE_PROBABILITY) {
+                                                // ブロック
+                                                arr2.push(2);
+                                            } else {
+                                                // 通路
+                                                arr2.push(1);
+                                            }
+                                        }
+                                    }
+                                }
+                                arr.push(arr2);
+                            }
+                            return arr;
+                        })(row, col);
+                        // 敵生成
+                        this.enemies = (()=> {
+                            let arr = [];
+                            let i, max;
+                            for (i = 0, max = this.gameMap.length; i < max; i = i + 1) {
+                                let j, max2;
+                                for (j = 0, max2 = this.gameMap[i].length; j < max2; j = j + 1) {
+                                    if (this.gameMap[i][j] === 1) {
+                                        if (i <= 4 && j <= 4) continue;
+                                        if (Math.random() <= this.config.ENEMY_APPEARANCE_PROBABILITY) {
+                                            arr.push({
+                                                y: i,
+                                                x: j,
+                                                direction: this.config.DIRECTION_DOWN,
+                                                death: false,
+                                                remove: false,
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                            return arr;
+                        })();
+                        // 爆弾カウント
+                        this.bombsCountMap = (()=> {
+                            let arr = [];
+                            let i, max;
+                            for (i = 0, max = this.gameMap.length; i < max; i = i + 1) {
+                                let arr2 = [];
+                                let j, max2;
+                                for (j = 0, max2 = this.gameMap[i].length; j < max2; j = j + 1) {
+                                    arr2.push(0);
+                                }
+                                arr.push(arr2);
+                            }
+                            return arr;
+                        })();
+                        // プレーヤー初期化
+                        this.initializedPlayer();
+                        // 時間
+                        this.tickCount = 0;
+                        // 残数
+                        this.left = this.config.PLAYER_INITIAL_LEFT;
+                        // ゲーム完了
+                        this.gameIsCompleted = false;
+                    },
+                    // ゲームリトライ
+                    retryGame: function() {
+                        // ゲーム初期化
+                        this.initializedGame(this.config.GAME_MAP_ROW, this.config.GAME_MAP_COL);
+                        // ゲーム画面へ遷移
+                        this.scene = this.config.SCENE_GAME_PLAY;
+                    },
+                    // プレーヤー移動
+                    movePlayer: function() {
+                        if (this.player.death) return;
+
+                        // 現在の位置
+                        const currentPositionX = Math.round(this.player.displayPositionX);
+                        const currentPositionY = Math.round(this.player.displayPositionY);
+                        const currentCellType = this.getCellType(currentPositionY, currentPositionX);
+
+                        // 爆発によりプレーヤー死亡
+                        if (currentCellType === this.config.CELL_TYPE_EXPLOSION) {
+                            // プレーヤー死亡
+                            this.deathPlayer();
+                            return;
+                        }
+
+                        // 敵に接触によりプレーヤー死亡
+                        let i, max;
+                        for (i = 0, max = this.enemies.length; i < max; i = i + 1) {
+                            const enemy = this.enemies[i];
+                            if (!enemy.death && enemy.y === currentPositionY && enemy.x === currentPositionX) {
+                                // プレーヤー死亡
+                                this.deathPlayer();
+                                return;
+                            }
+                        }
+
+                        // プレーヤー移動方向がUPの時
+                        if (this.movingDirection === this.config.DIRECTION_UP) {
+                            // 移動距離を足した後の次の表示位置
+                            const nextDisplayPositionY = this.player.displayPositionY - this.player.moveSpeed;
+                            // 移動距離を足した後の次の立ち位置
+                            const nextPositionY = Math.round(nextDisplayPositionY);
+                            // 「移動距離を足した後の次の立ち位置」が移動可能なセルだった場合
+                            if (this.getIsMoveEnabledCell(this.getCellType(nextPositionY, currentPositionX)) || currentCellType === this.config.CELL_TYPE_BOMB) {
+                                // 進行方向の次のセルが移動不可能なセルの場合、現在の位置に止める
+                                if (!this.getIsMoveEnabledCell(this.getCellType(currentPositionY - 1, currentPositionX)) && nextDisplayPositionY < currentPositionY) {
+                                    this.player.displayPositionY = currentPositionY;
+                                }
+                                // 「移動距離を足した後の次の表示位置」を適応
+                                else {
+                                    this.player.displayPositionY = nextDisplayPositionY;
+                                }
+                            }
+                            // 進行方向以外の表示位置を補正
+                            if (this.getIsMoveEnabledCell(this.getCellType(currentPositionY - 1, currentPositionX))) {
+                                this.player.displayPositionX = currentPositionX;
+                            }
+                        }
+                        // プレーヤー移動方向がDOWNの時
+                        else if (this.movingDirection === this.config.DIRECTION_DOWN) {
+                            // 移動距離を足した後の次の表示位置
+                            const nextDisplayPositionY = this.player.displayPositionY + this.player.moveSpeed;
+                            // 移動距離を足した後の次の立ち位置
+                            const nextPositionY = Math.round(nextDisplayPositionY);
+                            // 「移動距離を足した後の次の立ち位置」が移動可能なセルだった場合
+                            if (this.getIsMoveEnabledCell(this.getCellType(nextPositionY, currentPositionX)) || currentCellType === this.config.CELL_TYPE_BOMB) {
+                                // 進行方向の次のセルが移動不可能なセルの場合、現在の位置に止める
+                                if (!this.getIsMoveEnabledCell(this.getCellType(currentPositionY + 1, currentPositionX)) && currentPositionY < nextDisplayPositionY) {
+                                    this.player.displayPositionY = currentPositionY;
+                                }
+                                // 「移動距離を足した後の次の表示位置」を適応
+                                else {
+                                    this.player.displayPositionY = nextDisplayPositionY;
+                                }
+                            }
+                            // 進行方向以外の表示位置を補正
+                            if (this.getIsMoveEnabledCell(this.getCellType(currentPositionY + 1, currentPositionX))) {
+                                this.player.displayPositionX = currentPositionX;
+                            }
+                        }
+                        // プレーヤー移動方向がLEFTの時
+                        else if (this.movingDirection === this.config.DIRECTION_LEFT) {
+                            // 移動距離を足した後の次の表示位置
+                            const nextDisplayPositionX = this.player.displayPositionX - this.player.moveSpeed;
+                            // 移動距離を足した後の次の立ち位置
+                            const nextPositionX = Math.round(nextDisplayPositionX);
+                            // 「移動距離を足した後の次の立ち位置」が移動可能なセルだった場合
+                            if (this.getIsMoveEnabledCell(this.getCellType(currentPositionY, nextPositionX)) || currentCellType === this.config.CELL_TYPE_BOMB) {
+                                // 進行方向の次のセルが移動不可能なセルの場合、現在の位置に止める
+                                if (!this.getIsMoveEnabledCell(this.getCellType(currentPositionY, currentPositionX - 1)) && nextDisplayPositionX < currentPositionX) {
+                                    this.player.displayPositionX = currentPositionX;
+                                }
+                                // 「移動距離を足した後の次の表示位置」を適応
+                                else {
+                                    this.player.displayPositionX = nextDisplayPositionX;
+                                }
+                            }
+                            // 進行方向以外の表示位置を補正
+                            if (this.getIsMoveEnabledCell(this.getCellType(currentPositionY, currentPositionX - 1))) {
+                                this.player.displayPositionY = currentPositionY;
+                            }
+                        }
+                        // プレーヤー移動方向がRIGHTの時
+                        else if (this.movingDirection === this.config.DIRECTION_RIGHT) {
+                            // 移動距離を足した後の次の表示位置
+                            const nextDisplayPositionX = this.player.displayPositionX + this.player.moveSpeed;
+                            // 移動距離を足した後の次の立ち位置
+                            const nextPositionX = Math.round(nextDisplayPositionX);
+                            // 「移動距離を足した後の次の立ち位置」が移動可能なセルだった場合
+                            if (this.getIsMoveEnabledCell(this.getCellType(currentPositionY, nextPositionX)) || currentCellType === this.config.CELL_TYPE_BOMB) {
+                                // 進行方向の次のセルが移動不可能なセルの場合、現在の位置に止める
+                                if (!this.getIsMoveEnabledCell(this.getCellType(currentPositionY, currentPositionX + 1)) && currentPositionX < nextDisplayPositionX) {
+                                    this.player.displayPositionX = currentPositionX;
+                                }
+                                // 「移動距離を足した後の次の表示位置」を適応
+                                else {
+                                    this.player.displayPositionX = nextDisplayPositionX;
+                                }
+                            }
+                            // 進行方向以外の表示位置を補正
+                            if (this.getIsMoveEnabledCell(this.getCellType(currentPositionY, currentPositionX + 1))) {
+                                this.player.displayPositionY = currentPositionY;
+                            }
+                        }
+
+                        // 現在位置が変わった時のみ実行
+                        if (this.player.currentPositionX !== currentPositionX || this.player.currentPositionY !== currentPositionY) {
+                            this.player.currentPositionX = currentPositionX;
+                            this.player.currentPositionY = currentPositionY;
+
+                            // ゲーム終了後、出口に到着したかどうか？
+                            if (this.gameIsCompleted) {
+                                if (this.exitPositionX === currentPositionX && this.exitPositionY === currentPositionY) {
+                                    this.clearCount = this.time;
+                                    this.scene = this.config.SCENE_GAME_CLEAR;
+                                }
+                            }
+
+                            // アイテム取得
+                            if (currentCellType === this.config.CELL_TYPE_ITEM_BOMB_POSSESSIONS) {
+                                // 爆弾所有数増加
+                                this.player.bombPossessions += this.config.ITEM_BOMB_POSSESSIONS_STEP_UP_POINT;
+                                // セルの種類設定（通路）
+                                this.setCellType(currentPositionY, currentPositionX, this.config.CELL_TYPE_FREE);
+                            } else if (currentCellType === this.config.CELL_TYPE_ITEM_MOVE_SPEED) {
+                                // 移動速度アップ
+                                const speed = this.player.moveSpeed + this.config.ITEM_MOVE_SPEED_STEP_UP_POINT;
+                                if (speed < this.config.MAX_MOVE_SPEED < speed) {
+                                    this.player.moveSpeed = this.config.MAX_MOVE_SPEED;
+                                } else {
+                                    this.player.moveSpeed = speed;
+                                }
+                                // セルの種類設定（通路）
+                                this.setCellType(currentPositionY, currentPositionX, this.config.CELL_TYPE_FREE);
+                            } else if (currentCellType === this.config.CELL_TYPE_ITEM_EXPLOSION_POWER) {
+                                // 火力強化
+                                this.player.explosionPower += this.config.ITEM_EXPLOSION_POWER_STEP_UP_POINT;
+                                // セルの種類設定（通路）
+                                this.setCellType(currentPositionY, currentPositionX, this.config.CELL_TYPE_FREE);
+                            }
+
+                        }
+                    },
+                    // プレーヤー死亡
+                    deathPlayer: function() {
+                        this.player.death = true;
+                        // パラメータを初期化して再開
+                        setTimeout(()=> {
+                            // 残数確認
+                            this.left -= 1;
+                            if (this.left < 0) {
+                                this.left = 0;
+                                // ゲームオーバー表示
+                                this.scene = this.config.SCENE_GAME_OVER;
+                            } else {
+                                // プレーヤー初期化
+                                this.initializedPlayer();
+                            }
+                        }, 3000);
+                    },
+                    // プレーヤー初期化
+                    initializedPlayer: function() {
+                        this.player.death = false;
+                        this.player.displayPositionX = 1;
+                        this.player.displayPositionY = 1;
+                        this.player.currentPositionX = 1;
+                        this.player.currentPositionY = 1;
+                        this.player.moveSpeed = this.config.PLAYER_INITIAL_MOVE_SPEED;
+                        this.player.explosionPower = this.config.PLAYER_INITIAL_EXPLOSION_POWER;
+                        this.player.bombPossessions = this.config.PLAYER_INITIAL_BOMB_POSSESSIONS;
+                        this.player.lastMovingDirection = this.config.DIRECTION_DOWN;
+                        this.player.movingDirectionArr = [];
+                    },
+                    // 敵移動
+                    moveEnemies: function() {
+                        const shuffle = ([...array]) => {
+                            for (let i = array.length - 1; i >= 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [array[i], array[j]] = [array[j], array[i]];
+                            }
+                            return array;
+                        };
+                        let flg = true;
+                        let i, max;
+                        for (i = 0, max = this.enemies.length; i < max; i = i + 1) {
+                            const enemy = this.enemies[i];
+                            if (enemy.death) continue;
+                            flg = false;
+                            // 敵死亡
+                            if (this.getCellType(enemy.y, enemy.x) === this.config.CELL_TYPE_EXPLOSION) {
+                                enemy.death = true;
+                                setTimeout(()=> {
+                                    enemy.remove = true;
+                                }, 1000);
+                            }
+
+                            // 現在の進行方向を優先に突き当たったら方向変換するための方向の入れ斧
+                            const directionArr = (()=> {
+                                let arr = [enemy.direction];
+                                // UP
+                                if (enemy.direction === this.config.DIRECTION_UP) {
+                                    return arr.concat(shuffle([this.config.DIRECTION_DOWN, this.config.DIRECTION_LEFT, this.config.DIRECTION_RIGHT]))
+                                }
+                                // DOWN
+                                else if (enemy.direction === this.config.DIRECTION_DOWN) {
+                                    return arr.concat(shuffle([this.config.DIRECTION_UP, this.config.DIRECTION_LEFT, this.config.DIRECTION_RIGHT]));
+                                }
+                                // LEFT
+                                else if (enemy.direction === this.config.DIRECTION_LEFT) {
+                                    return arr.concat(shuffle([this.config.DIRECTION_UP, this.config.DIRECTION_DOWN, this.config.DIRECTION_RIGHT]))
+                                }
+                                // RIGHT
+                                else if (enemy.direction === this.config.DIRECTION_RIGHT) {
+                                    return arr.concat(shuffle([this.config.DIRECTION_UP, this.config.DIRECTION_DOWN, this.config.DIRECTION_LEFT]))
+                                }
+                            })();
+                            let j, max2;
+                            for (j = 0, max2 = directionArr.length; j < max2; j = j + 1) {
+                                const direction = directionArr[j];
+                                // UP
+                                if (direction === this.config.DIRECTION_UP) {
+                                    if (this.getIsMoveEnabledCell(this.getCellType(enemy.y - 1, enemy.x))) {
+                                        enemy.direction = this.config.DIRECTION_UP;
+                                        enemy.y -= 1;
+                                        break;
+                                    }
+                                }
+                                // DOWN
+                                else if (direction === this.config.DIRECTION_DOWN) {
+                                    if (this.getIsMoveEnabledCell(this.getCellType(enemy.y + 1, enemy.x))) {
+                                        enemy.direction = this.config.DIRECTION_DOWN;
+                                        enemy.y += 1;
+                                        break;
+                                    }
+                                }
+                                // LEFT
+                                else if (direction === this.config.DIRECTION_LEFT) {
+                                    if (this.getIsMoveEnabledCell(this.getCellType(enemy.y, enemy.x - 1))) {
+                                        enemy.direction = this.config.DIRECTION_LEFT;
+                                        enemy.x -= 1;
+                                        break;
+                                    }
+                                }
+                                // RIGHT
+                                else if (direction === this.config.DIRECTION_RIGHT) {
+                                    if (this.getIsMoveEnabledCell(this.getCellType(enemy.y, enemy.x + 1))) {
+                                        enemy.direction = this.config.DIRECTION_RIGHT;
+                                        enemy.x += 1;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        // 敵全滅
+                        if (flg && !this.gameIsCompleted) {
+                            let y = null;
+                            let x = null;
+                            let flg2 = true;
+                            while(flg2) {
+                                y = Math.floor(Math.random() * this.gameMap.length - 1);
+                                x = Math.floor(Math.random() * this.gameMap[0].length - 1);
+                                if (this.getCellType(y, x) === this.config.CELL_TYPE_FREE) {
+                                    flg2 = false;
+                                    this.exitPositionY = y;
+                                    this.exitPositionX = x;
+                                    this.gameIsCompleted = true;
+                                }
+                            }
+                        }
+                    },
+                    // 爆弾設置
+                    setBomb: function() {
+                        // 爆弾設置数取得
+                        const setBombCount = (()=> {
+                            let count = 0;
+                            let i, max;
+                            for (i = 0, max = this.gameMap.length; i < max; i = i + 1) {
+                                let j, max2;
+                                for (j = 0, max2 = this.gameMap[i].length; j < max2; j = j + 1) {
+                                    if (this.gameMap[i][j] === this.config.CELL_TYPE_BOMB) {
+                                        count += 1;
+                                    }
+                                }
+                            }
+                            return count;
+                        })();
+                        if (setBombCount < this.player.bombPossessions) {
+                            // セルの種類設定
+                            this.setCellType(this.player.currentPositionY, this.player.currentPositionX, this.config.CELL_TYPE_BOMB);
+                        }
+                    },
+                    // 爆弾起動中
+                    runBombs: function() {
+                        let i, max;
+                        for (i = 0, max = this.gameMap.length; i < max; i = i + 1) {
+                            let j, max2;
+                            for (j = 0, max2 = this.gameMap[i].length; j < max2; j = j + 1) {
+                                // セルの種類取得
+                                const cellType = this.getCellType(i, j);
+                                if (cellType !== this.config.CELL_TYPE_BOMB && cellType !== this.config.CELL_TYPE_EXPLOSION) continue;
+                                //
+                                const count = this.bombsCountMap[i][j];
+                                // 爆発完了
+                                if (this.config.BOMB_COUNT_COMPLETE <= count) {
+                                    // 爆弾カウント初期化
+                                    this.bombsCountMap[i][j] = this.config.BOMB_COUNT_STANDBY;
+                                    // セルの種類設定
+                                    this.setCellType(i, j, this.config.CELL_TYPE_FREE);
+                                }
+                                // 爆発
+                                else if (this.config.BOMB_COUNT_EXPLOSION <= count) {
+                                    this.bombsCountMap[i][j] = count + (1000 / this.config.BOMB_EXPLOSION_TIME) / 10;
+                                    // セルの種類設定
+                                    this.setCellType(i, j, this.config.CELL_TYPE_EXPLOSION);
+                                }
+                                // 爆発（一回だけ実行）
+                                else if (this.config.BOMB_COUNT_PROPAGATION <= count) {
+                                    // 爆発設定
+                                    this.setExplosion(i, j);
+                                    // 爆発
+                                    this.bombsCountMap[i][j] = this.config.BOMB_COUNT_EXPLOSION;
+                                }
+                                // 待機
+                                else {
+                                    this.bombsCountMap[i][j] = count + (1000 / this.config.BOMB_STANDBY_TIME) / 10;
+                                }
+                            }
+                        }
+                    },
+                    // 爆発設定
+                    setExplosion: function(y, x) {
+                        const explosion = (type)=> {
+                            let i, max;
+                            for (i = 1, max = this.player.explosionPower + 1; i < max; i = i + 1) {
+                                // 通路
+                                let tagY, tagX;
+                                if (type === 'right') {
+                                    tagY = y;
+                                    tagX = x + i;
+                                } else if (type === 'left') {
+                                    tagY = y;
+                                    tagX = x - i;
+                                } else if (type === 'top') {
+                                    tagY = y - i;
+                                    tagX = x;
+                                } else if (type === 'bottom') {
+                                    tagY = y + i;
+                                    tagX = x;
+                                } else {
+                                    tagY = y;
+                                    tagX = x;
+                                }
+                                const cellType = this.getCellType(tagY, tagX);
+                                // 対象セルが「壊せない壁」の時
+                                if (cellType === this.config.CELL_TYPE_FIXED) {
+                                    // 伝播を止める
+                                    break;
+                                }
+                                // 対象セルが「ブロック（壊せる壁）」の時
+                                else if (cellType === this.config.CELL_TYPE_BLOCK) {
+                                    // セルの種類設定（ブロック（壊れた状態））
+                                    this.setCellType(tagY, tagX, this.config.CELL_TYPE_BLOCK_BROKEN);
+                                    setTimeout(()=> {
+                                        // セルの種類設定（通路）
+                                        this.setCellType(tagY, tagX, this.config.CELL_TYPE_FREE);
+                                        // アイテムを出現させる
+                                        if (Math.random() <= this.config.ITEM_APPEARANCE_PROBABILITY) {
+                                            this.gameMap[tagY][tagX] = this.config.ITEM_TYPES[Math.floor(Math.random() * this.config.ITEM_TYPES.length)] || this.config.CELL_TYPE_FREE;
+                                        }
+                                    }, this.config.BOMB_EXPLOSION_TIME);
+                                    // 伝播を止める
+                                    break;
+                                }
+                                // 対象のセルが「爆弾設置」の時
+                                else if (cellType === this.config.CELL_TYPE_BOMB) {
+                                    // 爆発設定
+                                    setTimeout(()=> {
+                                        // 爆弾カウント設定
+                                        this.bombsCountMap[tagY][tagX] = this.config.BOMB_COUNT_EXPLOSION;
+                                        // 爆発設定
+                                        this.setExplosion(tagY, tagX);
+                                    }, this.config.BOMB_DELAY_TIME);
+                                }
+                                // 対象のセルがアイテムの時
+                                else if (
+                                    cellType === this.config.CELL_TYPE_ITEM_MOVE_SPEED ||
+                                    cellType === this.config.CELL_TYPE_ITEM_EXPLOSION_POWER ||
+                                    cellType === this.config.CELL_TYPE_ITEM_BOMB_POSSESSIONS
+                                ) {
+                                    // 爆弾カウント設定
+                                    this.bombsCountMap[tagY][tagX] = this.config.BOMB_COUNT_EXPLOSION;
+                                    // セルの種類設定（爆弾爆発）
+                                    this.setCellType(tagY, tagX, this.config.CELL_TYPE_EXPLOSION);
+                                }
+                                // 対象のセルが「通路」の時
+                                else if (cellType === this.config.CELL_TYPE_FREE) {
+                                    // 爆弾カウント設定
+                                    this.bombsCountMap[tagY][tagX] = this.config.BOMB_COUNT_EXPLOSION;
+                                    // セルの種類設定（爆弾爆発）
+                                    this.setCellType(tagY, tagX, this.config.CELL_TYPE_EXPLOSION);
+                                }
+                            }
+                        };
+                        explosion('right');
+                        explosion('left');
+                        explosion('top');
+                        explosion('bottom');
+                    },
+                    // 敵の向き
+                    getEnemyBackgroundPosition: function(index) {
+                        // 死亡
+                        if (this.enemies[index].death) {
+                            return '-64px 0';
+                        }
+                        const direction = this.enemies[index].direction;
+                        if (direction === this.config.DIRECTION_DOWN) {
+                            return '0 0';
+                        } else if (direction === this.config.DIRECTION_UP) {
+                            return '0 0';
+                        } else if (direction === this.config.DIRECTION_RIGHT) {
+                            return '-32px 0';
+                        } else if (direction === this.config.DIRECTION_LEFT) {
+                            return '0 0';
+                        }
+                    },
+                    // 爆発の背景
+                    getExplosionBackgroundPosition: function(y, x) {
+                        // 上
+                       const upCellType = this.getCellType(y - 1, x);
+                        // 下
+                        const downCellType = this.getCellType(y + 1, x);
+                        // 左
+                        const leftCellType = this.getCellType(y, x - 1);
+                        // 右
+                        const rightCellType = this.getCellType(y, x + 1);
+                        //
+                        if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-448px 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-320px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-384px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-352px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-416px 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-128px 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-288px 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-256px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-192px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-224px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-160px 0';
+                        } else if (
+                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-32px 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '0 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType !== this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-64px 0';
+                        } else if (
+                            upCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            downCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
+                            rightCellType === this.config.CELL_TYPE_EXPLOSION
+                        ) {
+                            return '-96px 0';
+                        } else {
+                            return '0 0';
+                        }
+                    },
+                    // セルの種類設定
+                    setCellType: function(y, x, cellType) {
+                        this.gameMap[y][x] = cellType;
+                    },
+                    // セルの種類取得
+                    getCellType: function(y, x) {
+                        return this.gameMap.toString().split(',')[(y * this.gameMap[0].length) + x] - 0;
+                    },
+                    // 移動可能なセルか否か
+                    getIsMoveEnabledCell: function(cellType) {
+                        switch (cellType) {
+                            case this.config.CELL_TYPE_FREE:
+                                return true;
+                            case this.config.CELL_TYPE_EXPLOSION:
+                                return true;
+                            case this.config.CELL_TYPE_ITEM_BOMB_POSSESSIONS:
+                                return true;
+                            case this.config.CELL_TYPE_ITEM_EXPLOSION_POWER:
+                                return true;
+                            case this.config.CELL_TYPE_ITEM_MOVE_SPEED:
+                                return true;
+                        }
+                        return false;
+                    },
+                },
+                computed: {
+                    // 移動方向
+                    movingDirection: function() {
+                        if (!this.player.movingDirectionArr || this.player.movingDirectionArr.length < 1) return null;
+                        return this.player.movingDirectionArr[this.player.movingDirectionArr.length - 1];
+                    },
+                    // プレーヤーの向き
+                    playerBackgroundPosition: function() {
+                        // 死亡
+                        if (this.player.death) {
+                            return '-512px 0'
+                        }
+                        const direction = this.movingDirection || this.player.lastMovingDirection;
+                        if (direction === this.config.DIRECTION_DOWN) {
+                            if (!this.movingDirection) {
+                                return '0 0';
+                            } else if (this.tickCount % 4 === 0) {
+                                return '-96px 0';
+                            } else if (this.tickCount % 4 === 3) {
+                                return '-64px 0';
+                            } else if (this.tickCount % 4 === 2) {
+                                return '-32px 0';
+                            } else {
+                                return '0 0';
+                            }
+                        } else if (direction === this.config.DIRECTION_UP) {
+                            if (!this.movingDirection) {
+                                return '-128px 0';
+                            } else if (this.tickCount % 4 === 0) {
+                                return '-224px 0';
+                            } else if (this.tickCount % 4 === 3) {
+                                return '-192px 0';
+                            } else if (this.tickCount % 4 === 2) {
+                                return '-160px 0';
+                            } else {
+                                return '-128px 0';
+                            }
+                        } else if (direction === this.config.DIRECTION_RIGHT) {
+                            if (!this.movingDirection) {
+                                return '-256px 0';
+                            } else if (this.tickCount % 4 === 0) {
+                                return '-352px 0';
+                            } else if (this.tickCount % 4 === 3) {
+                                return '-320px 0';
+                            } else if (this.tickCount % 4 === 2) {
+                                return '-288px 0';
+                            } else {
+                                return '-256px 0';
+                            }
+                        } else if (direction === this.config.DIRECTION_LEFT) {
+                            if (!this.movingDirection) {
+                                return '-384px 0';
+                            } else if (this.tickCount % 4 === 0) {
+                                return '-480px 0';
+                            } else if (this.tickCount % 4 === 3) {
+                                return '-448px 0';
+                            } else if (this.tickCount % 4 === 2) {
+                                return '-416px 0';
+                            } else {
+                                return '-384px 0';
+                            }
+                        }
+                    },
+                    // 爆弾のアニメーション
+                    bombBackgroundPosition: function() {
+                        if (this.tickCount % 4 === 0) {
+                            return '-96px 0';
+                        } else if (this.tickCount % 4 === 3) {
+                            return '-64px 0';
+                        } else if (this.tickCount % 4 === 2) {
+                            return '-32px 0';
+                        } else {
+                            return '0 0';
+                        }
+                    },
+                    // 経過時間
+                    time: function() {
+                        return Math.floor(this.tickCount / 10);
+                    },
+                }
+            });
+
+        </script>
+    </body>
+</html>
