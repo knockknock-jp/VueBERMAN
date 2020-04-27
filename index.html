@@ -159,10 +159,6 @@
                 height: 32px;
                 background-size: 544px 32px;
                 background-image: url('./player.png');
-                transition-delay: 0ms;
-                transition-duration: 100ms;
-                transition-property: transform;
-                transition-timing-function: linear;
             }
             .enemy {
                 position: absolute;
@@ -331,11 +327,11 @@
                         <div class="modal__container">
                             <div class="modal__inner">
                                 <h1 class="modal__heading">CONGRATULATIONS</h1>
-                                <template v-if="clearCount < 250">
+                                <template v-if="clearCount < 300">
                                     <img class="modal__image" src="./cup.png" alt="">
                                     <p>RANK:A</p>
                                 </template>
-                                <template v-else-if="clearCount < 350">
+                                <template v-else-if="clearCount < 400">
                                     <img class="modal__image" src="./cup2.png" alt="">
                                     <p>RANK:B</p>
                                 </template>
@@ -411,7 +407,7 @@
                         DIRECTION_LEFT: 'left',
                         // プレーヤー情報
                         PLAYER_INITIAL_LEFT: 2, // 初期残数
-                        PLAYER_INITIAL_MOVE_SPEED: 0.2,
+                        PLAYER_INITIAL_MOVE_SPEED: 0.05,
                         PLAYER_INITIAL_EXPLOSION_POWER: 1,
                         PLAYER_INITIAL_BOMB_POSSESSIONS: 1,
                         // 爆弾カウント
@@ -423,18 +419,18 @@
                         BOMB_STANDBY_TIME: 3000, // 爆弾待機時間
                         BOMB_EXPLOSION_TIME: 1000, // 爆発持続時間
                         BOMB_DELAY_TIME: 100, // 誘爆時の遅延
-                        // アイテム情報
+                        // アイテム 情報
                         ITEM_TYPES: [6, 7, 8],
-                        ITEM_APPEARANCE_PROBABILITY: 0.2,
+                        ITEM_APPEARANCE_PROBABILITY: 0.3, // アイテム出現率
                         ITEM_EXPLOSION_POWER_STEP_UP_POINT: 1, // アイテム（火力）の上昇数
-                        ITEM_MOVE_SPEED_STEP_UP_POINT: 0.1, // アイテム（移動速度）の上昇数
+                        ITEM_MOVE_SPEED_STEP_UP_POINT: 0.05, // アイテム（移動速度）の上昇数
                         ITEM_BOMB_POSSESSIONS_STEP_UP_POINT: 1, // アイテム（爆弾所有数）の上昇数
                         // その他
                         MAX_MOVE_SPEED: 1, // 最大移動スピード
-                        ENEMY_APPEARANCE_PROBABILITY: 0.1, // 敵の出現率
-                        BLOCK_APPEARANCE_PROBABILITY: 0.5, // ブロックの出現率
-                        GAME_MAP_ROW: 13, // 行
-                        GAME_MAP_COL: 25, // 列
+                        ENEMY_APPEARANCE_PROBABILITY: 0.05, // 敵の出現率
+                        BLOCK_APPEARANCE_PROBABILITY: 0.3, // ブロックの出現率
+                        GAME_MAP_ROW: 31, // 行
+                        GAME_MAP_COL: 41, // 列
                     },
                     // シーン
                     scene: 0,
@@ -467,6 +463,8 @@
                     ],
                     // 爆弾カウント
                     bombsCountMap: null,
+                    // 爆心地
+                    explosionCenterPositions: [],
                     // ゲーム完了
                     gameIsCompleted: false,
                     exitPositionY: 0,
@@ -490,6 +488,9 @@
                         this.movePlayer();
                         // 爆弾起動中
                         this.runBombs();
+                    }, 1000 / 30);
+                    setInterval(()=> {
+                        if (this.scene !== this.config.SCENE_GAME_PLAY) return;
                         // 表示更新
                         this.tickCount += 1;
                     }, 1000 / 10);
@@ -1016,10 +1017,14 @@
                                     this.bombsCountMap[i][j] = this.config.BOMB_COUNT_STANDBY;
                                     // セルの種類設定
                                     this.setCellType(i, j, this.config.CELL_TYPE_FREE);
+                                    // 爆心地解除
+                                    this.explosionCenterPositions = this.explosionCenterPositions.filter((value)=> {
+                                        return value !== i + '-' + j;
+                                    });
                                 }
                                 // 爆発
                                 else if (this.config.BOMB_COUNT_EXPLOSION <= count) {
-                                    this.bombsCountMap[i][j] = count + (1000 / this.config.BOMB_EXPLOSION_TIME) / 10;
+                                    this.bombsCountMap[i][j] = count + (1000 / this.config.BOMB_EXPLOSION_TIME) / 30;
                                     // セルの種類設定
                                     this.setCellType(i, j, this.config.CELL_TYPE_EXPLOSION);
                                 }
@@ -1027,12 +1032,15 @@
                                 else if (this.config.BOMB_COUNT_PROPAGATION <= count) {
                                     // 爆発設定
                                     this.setExplosion(i, j);
-                                    // 爆発
                                     this.bombsCountMap[i][j] = this.config.BOMB_COUNT_EXPLOSION;
+                                    // 爆心地表現
+                                    if (this.getCellType(i, j) === this.config.CELL_TYPE_BOMB) {
+                                        this.explosionCenterPositions.push(i + '-' + j);
+                                    }
                                 }
                                 // 待機
                                 else {
-                                    this.bombsCountMap[i][j] = count + (1000 / this.config.BOMB_STANDBY_TIME) / 10;
+                                    this.bombsCountMap[i][j] = count + (1000 / this.config.BOMB_STANDBY_TIME) / 30;
                                 }
                             }
                         }
@@ -1062,7 +1070,7 @@
                                 }
                                 const cellType = this.getCellType(tagY, tagX);
                                 // 対象セルが「壊せない壁」の時
-                                if (cellType === this.config.CELL_TYPE_FIXED) {
+                                if (cellType === this.config.CELL_TYPE_FIXED || cellType === this.config.CELL_TYPE_BLOCK_BROKEN) {
                                     // 伝播を止める
                                     break;
                                 }
@@ -1135,6 +1143,10 @@
                     },
                     // 爆発の背景
                     getExplosionBackgroundPosition: function(y, x) {
+                        // 爆心地
+                        if (this.explosionCenterPositions.indexOf(y + '-' + x) >= 0) {
+                            return '-448px 0';
+                        }
                         // 上
                        const upCellType = this.getCellType(y - 1, x);
                         // 下
@@ -1157,98 +1169,232 @@
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-320px 0';
+                            if (upCellType !== this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-448px 0';
+                            } else {
+                                return '-320px 0';
+                            }
                         } else if (
                             upCellType === this.config.CELL_TYPE_EXPLOSION &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-384px 0';
+                            if (downCellType !== this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-448px 0';
+                            } else {
+                                return '-384px 0';
+                            }
                         } else if (
                             upCellType === this.config.CELL_TYPE_EXPLOSION &&
                             downCellType === this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-352px 0';
+                            if (leftCellType !== this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-448px 0';
+                            } else {
+                                return '-352px 0';
+                            }
                         } else if (
                             upCellType === this.config.CELL_TYPE_EXPLOSION &&
                             downCellType === this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-416px 0';
+                            if (rightCellType !== this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-448px 0';
+                            } else {
+                                return '-416px 0';
+                            }
                         } else if (
                             upCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-128px 0';
+                            if (
+                                upCellType !== this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                downCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-320px 0';
+                            } else if (
+                                upCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                downCellType !== this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-384px 0';
+                            } else if (
+                                upCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                downCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-448px 0';
+                            } else {
+                                return '-128px 0';
+                            }
                         } else if (
                             upCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             downCellType === this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-288px 0';
+                            if (
+                                upCellType !== this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-320px 0';
+                            } else if (
+                                upCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                leftCellType !== this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-352px 0';
+                            } else if (
+                                upCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-448px 0';
+                            } else {
+                                return '-288px 0';
+                            }
                         } else if (
                             upCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             downCellType === this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-256px 0';
+                            if (
+                                upCellType !== this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-320px 0';
+                            } else if (
+                                upCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType !== this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-416px 0';
+                            } else if (
+                                upCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-448px 0';
+                            } else {
+                                return '-256px 0';
+                            }
                         } else if (
                             upCellType === this.config.CELL_TYPE_EXPLOSION &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-192px 0';
+                            if (
+                                downCellType !== this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-384px 0';
+                            } else if (
+                                downCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                leftCellType !== this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-352px 0';
+                            } else if (
+                                downCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-448px 0';
+                            } else {
+                                return '-192px 0';
+                            }
                         } else if (
                             upCellType === this.config.CELL_TYPE_EXPLOSION &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-224px 0';
+                            if (
+                                downCellType !== this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-384px 0';
+                            } else if (
+                                downCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType !== this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-320px 0';
+                            } else if (
+                                downCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-448px 0';
+                            } else {
+                                return '-224px 0';
+                            }
                         } else if (
                             upCellType === this.config.CELL_TYPE_EXPLOSION &&
                             downCellType === this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-160px 0';
+                            if (
+                                leftCellType !== this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-352px 0';
+                            } else if (
+                                leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType !== this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-416px 0';
+                            } else if (
+                                leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN &&
+                                rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN
+                            ) {
+                                return '-448px 0';
+                            } else {
+                                return '-160px 0';
+                            }
                         } else if (
-                            upCellType === this.config.CELL_TYPE_EXPLOSION &&
+                            (upCellType === this.config.CELL_TYPE_EXPLOSION) &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-32px 0';
+                            if (downCellType === this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-160px 0';
+                            } else {
+                                return '-32px 0';
+                            }
                         } else if (
                             upCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             downCellType === this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '0 0';
+                            if (upCellType === this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-160px 0';
+                            } else {
+                                return '0 0';
+                            }
                         } else if (
                             upCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType === this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType !== this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-64px 0';
+                            if (rightCellType === this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-128px 0';
+                            } else {
+                                return '-64px 0';
+                            }
                         } else if (
                             upCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             downCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             leftCellType !== this.config.CELL_TYPE_EXPLOSION &&
                             rightCellType === this.config.CELL_TYPE_EXPLOSION
                         ) {
-                            return '-96px 0';
+                            if (leftCellType === this.config.CELL_TYPE_BLOCK_BROKEN) {
+                                return '-128px 0';
+                            } else {
+                                return '-96px 0';
+                            }
                         } else {
                             return '0 0';
                         }
@@ -1259,7 +1405,8 @@
                     },
                     // セルの種類取得
                     getCellType: function(y, x) {
-                        return this.gameMap.toString().split(',')[(y * this.gameMap[0].length) + x] - 0;
+                        return this.gameMap[y][x];
+                        // return this.gameMap.toString().split(',')[(y * this.gameMap[0].length) + x] - 0;
                     },
                     // 移動可能なセルか否か
                     getIsMoveEnabledCell: function(cellType) {
