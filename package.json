@@ -1,0 +1,11 @@
+{
+  "name": "vueberman",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "serve": "http-server -o"
+  },
+  "author": "nishida@knockknock.jp",
+  "license": "ISC"
+}
